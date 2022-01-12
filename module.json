@@ -1,0 +1,6 @@
+{
+    "type": "package",
+    "namespace": "interface_fbmsg_legacy",
+    "communicationProtocol": "node_worker",
+    "autoRestart": true
+}

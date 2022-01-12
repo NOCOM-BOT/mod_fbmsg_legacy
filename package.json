@@ -1,0 +1,27 @@
+{
+  "name": "@nocom_bot/mod_interface_fbmsg_legacy",
+  "version": "0.0.1",
+  "description": "v1 Spec-compliant(?) Facebook Messenger (legacy protocol) interface module for NOCOM_BOT",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NOCOM-BOT/mod_database_json.git"
+  },
+  "keywords": [
+    "nocom",
+    "bot",
+    "chat",
+    "json",
+    "database"
+  ],
+  "author": "BadAimWeeb",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/NOCOM-BOT/mod_database_json/issues"
+  },
+  "homepage": "https://github.com/NOCOM-BOT/mod_database_json#readme",
+  "type": "module"
+}
