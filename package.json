@@ -23,5 +23,8 @@
     "url": "https://github.com/NOCOM-BOT/mod_database_json/issues"
   },
   "homepage": "https://github.com/NOCOM-BOT/mod_database_json#readme",
-  "type": "module"
+  "type": "module",
+  "dependencies": {
+    "fca-unofficial": "^1.3.10"
+  }
 }
