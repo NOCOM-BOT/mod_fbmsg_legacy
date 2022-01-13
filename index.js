@@ -35,37 +35,43 @@ parentPort.once("message", (data) => {
 });
 
 async function portCallback(data) {
-    if (data.type === "api_call") {
-        try {
-            let response = await handleAPICall(data.call_cmd, data.data);
+    switch (data.type) {
+        case "api_call":
+            try {
+                let response = await handleAPICall(data.call_cmd, data.data);
 
-            if (response.exist) {
+                if (response.exist) {
+                    parentPort.postMessage({
+                        type: "api_sendresponse",
+                        response_to: data.call_from,
+                        exist: true,
+                        error: null,
+                        data: response.data,
+                        nonce: data.nonce
+                    });
+                } else {
+                    parentPort.postMessage({
+                        type: "api_sendresponse",
+                        response_to: data.call_from,
+                        exist: false,
+                        nonce: data.nonce
+                    });
+                }
+            } catch (e) {
                 parentPort.postMessage({
                     type: "api_sendresponse",
                     response_to: data.call_from,
                     exist: true,
-                    error: null,
-                    data: response.data,
-                    nonce: data.nonce
-                });
-            } else {
-                parentPort.postMessage({
-                    type: "api_sendresponse",
-                    response_to: data.call_from,
-                    exist: false,
+                    error: String(e),
+                    data: null,
                     nonce: data.nonce
                 });
             }
-        } catch (e) {
+        case "challenge":
             parentPort.postMessage({
-                type: "api_sendresponse",
-                response_to: data.call_from,
-                exist: true,
-                error: String(e),
-                data: null,
-                nonce: data.nonce
+                type: "challenge",
+                challenge: data.challenge
             });
-        }
     }
 }
 
