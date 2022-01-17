@@ -34,6 +34,40 @@ parentPort.once("message", (data) => {
     }
 });
 
+let instances = {};
+
+class FCAInstance {
+    accountName = "";
+    rawAccountID = "";
+    formattedAccountID = "";
+
+    constructor() {}
+
+    async login(username, password, state) {
+        if (state) {
+            return this.loginState(state);
+        } else {
+            return this.loginState(await this.loginUPEngine(username, password));
+        }
+    }
+
+    async loginUPEngine(username, password) {
+        throw new Error("not implemented");
+    }
+
+    async loginState(state) {
+        this.fca = await fcaLogin({
+            appstate: state
+        });
+
+        this.rawAccountID = this.fca.getCurrentUserID();
+        this.formattedAccountID = `${this.rawAccountID}@!!Facebook###User`;
+        let data_currentUser = await this.fca.getUserInfo(this.rawAccountID);
+        
+        this.accountName = data_currentUser[this.rawAccountID].name;
+    }
+}
+
 async function portCallback(data) {
     switch (data.type) {
         case "api_call":
@@ -77,6 +111,23 @@ async function portCallback(data) {
 
 async function handleAPICall(cmd, data) {
     switch (cmd) {
+        case "login":
+            if (Object.hasOwn(instances, data.interfaceID)) throw "Interface ID already exist";
+            let i;
+            await (i = instances[data.interfaceID] = new FCAInstance())
+                .loginState(data.loginData.state);
+            
+            return {
+                exist: true,
+                data: {
+                    success: true,
+                    interfaceID: data.interfaceID,
+                    accountName: i.accountName,
+                    rawAccountID: i.rawAccountID,
+                    formattedAccountID: i.formattedAccountID,
+                    accountAdditionalData: null
+                }
+            }
         default:
             return {
                 exist: false
