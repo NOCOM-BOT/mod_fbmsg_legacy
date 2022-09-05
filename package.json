@@ -1,14 +1,14 @@
 {
-  "name": "@nocom_bot/mod_interface_fbmsg_legacy",
+  "name": "@nocom_bot/mod_fbmsg_legacy",
   "version": "0.0.1",
-  "description": "v1 Spec-compliant(?) Facebook Messenger (legacy protocol) interface module for NOCOM_BOT",
-  "main": "index.js",
+  "description": "[WIP] v1 Spec-compliant Facebook Messenger (legacy protocol) interface module for NOCOM_BOT",
+  "main": "dist/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/NOCOM-BOT/mod_database_json.git"
+    "url": "git+https://github.com/NOCOM-BOT/mod_fbmsg_legacy.git"
   },
   "keywords": [
     "nocom",
@@ -20,11 +20,16 @@
   "author": "BadAimWeeb",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/NOCOM-BOT/mod_database_json/issues"
+    "url": "https://github.com/NOCOM-BOT/mod_fbmsg_legacy/issues"
   },
-  "homepage": "https://github.com/NOCOM-BOT/mod_database_json#readme",
+  "homepage": "https://github.com/NOCOM-BOT/mod_fbmsg_legacy#readme",
   "type": "module",
   "dependencies": {
     "fca-unofficial": "^1.3.10"
+  },
+  "devDependencies": {
+    "@tsconfig/node18": "^1.0.1",
+    "@types/node": "^18.7.14",
+    "typescript": "^4.8.2"
   }
 }
