@@ -91,5 +91,7 @@ export default class FCAInstance {
         let data_currentUser = await this.fca.getUserInfo(this.rawAccountID);
         
         this.accountName = data_currentUser[this.rawAccountID].name;
+
+        return this.fca;
     }
 }
