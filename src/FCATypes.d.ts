@@ -68,7 +68,8 @@ declare module 'fca-unofficial' {
             },
             threadID: string | string[],
             callback?: (err?: Error, data?: { threadID: string, messageID: string, timestamp: number }) => void,
-            replyMessageID?: string
+            replyMessageID?: string,
+            isGroup?: boolean
         ) => Promise<{ threadID: string, messageID: string, timestamp: number }>,
         sendTypingIndicator: (threadID: string, callback?: (err?: Error) => void) => Promise<void>,
         setMessageReaction: (reaction: string, messageID: string, callback?: (err?: Error) => void, forceCustomReaction?: boolean) => Promise<void>,

@@ -36,6 +36,10 @@ let clients: {
     }
 } = {};
 
+let localNameCache: {
+    [id: string]: string
+} = {};
+
 let dataPathRequest = await cmc.callAPI("core", "get_data_folder", null);
 let dataPath = "";
 if (dataPathRequest.exist) {
@@ -218,58 +222,66 @@ cmc.on("api:send_message", async (call_from: string, data: IMessageData, callbac
         return;
     }
 
-    let { messageID } = await fca.sendMessage({
-        body: data.content,
-        attachment: (data.attachments.map((attachment) => {
-            if (attachment.url.startsWith("data:")) {
-                // Check if it's base64-encoded or URL-encoded by checking if 
-                // it has ";base64" in "data:<mime>;base64,<data>"
-                if (attachment.url.split(";")[1].startsWith("base64")) {
-                    // Base64
-                    let buf = Buffer.from(attachment.url.split(",")[1], "base64");
-                    let stream = new streamBuffers.ReadableStreamBuffer({
-                        initialSize: buf.length
-                    });
-                    //@ts-ignore
-                    stream.path = attachment.filename;
-                    stream.put(buf);
-                    stream.stop();
+    let threadID = data.channelID.split("@")[0];
 
-                    return stream;
-                } else {
-                    // URL-encoded (percent-encoded)
-                    let buf = Buffer.from(decodeURIComponent(attachment.url.split(",")[1]));
-                    let stream = new streamBuffers.ReadableStreamBuffer({
-                        initialSize: buf.length
-                    });
-                    //@ts-ignore
-                    stream.path = attachment.filename;
-                    stream.put(buf);
-                    stream.stop();
+    let { messageID } = await fca.sendMessage(
+        {
+            body: data.content,
+            attachment: (data.attachments.map((attachment) => {
+                if (attachment.url.startsWith("data:")) {
+                    // Check if it's base64-encoded or URL-encoded by checking if 
+                    // it has ";base64" in "data:<mime>;base64,<data>"
+                    if (attachment.url.split(";")[1].startsWith("base64")) {
+                        // Base64
+                        let buf = Buffer.from(attachment.url.split(",")[1], "base64");
+                        let stream = new streamBuffers.ReadableStreamBuffer({
+                            initialSize: buf.length
+                        });
+                        //@ts-ignore
+                        stream.path = attachment.filename;
+                        stream.put(buf);
+                        stream.stop();
 
-                    return stream;
-                }
-            } else {
-                // Parse URL with protocol
-                let parsedURL = new URL(attachment.url);
-                switch (parsedURL.protocol) {
-                    case "http:":
-                        let httpReq = http.get(parsedURL.toString());
-                        httpReq.path = attachment.filename;
-                        return httpReq;
-                    case "https:":
-                        let httpsReq = https.get(parsedURL.toString());
-                        httpsReq.path = attachment.filename;
-                        return httpsReq;
-                    case "file:":
-                        let stream = fsSync.createReadStream(fileURLToPath(parsedURL.toString()));
                         return stream;
-                    default:
-                        return null;
+                    } else {
+                        // URL-encoded (percent-encoded)
+                        let buf = Buffer.from(decodeURIComponent(attachment.url.split(",")[1]));
+                        let stream = new streamBuffers.ReadableStreamBuffer({
+                            initialSize: buf.length
+                        });
+                        //@ts-ignore
+                        stream.path = attachment.filename;
+                        stream.put(buf);
+                        stream.stop();
+
+                        return stream;
+                    }
+                } else {
+                    // Parse URL with protocol
+                    let parsedURL = new URL(attachment.url);
+                    switch (parsedURL.protocol) {
+                        case "http:":
+                            let httpReq = http.get(parsedURL.toString());
+                            httpReq.path = attachment.filename;
+                            return httpReq;
+                        case "https:":
+                            let httpsReq = https.get(parsedURL.toString());
+                            httpsReq.path = attachment.filename;
+                            return httpsReq;
+                        case "file:":
+                            let stream = fsSync.createReadStream(fileURLToPath(parsedURL.toString()));
+                            return stream;
+                        default:
+                            return null;
+                    }
                 }
-            }
-        })).filter(x => x) as Readable[]
-    }, data.channelID);
+            })).filter(x => x) as Readable[]
+        },
+        threadID,
+        void 0,
+        data.replyMessageID?.split?.("@")?.[0],
+        threadID.length >= 16
+    );
 
     callback(null, {
         success: true,
@@ -281,12 +293,82 @@ cmc.on("api:get_userinfo", async (call_from: string, data: {
     interfaceID: number,
     userID: string
 }, callback: (error?: any, data?: any) => void) => {
+    if (!clients[data.interfaceID]) {
+        callback("Interface ID does not exist", { success: false });
+        return;
+    }
 
+    let client = clients[data.interfaceID].instance;
+    let fca = client.fca;
+
+    if (!fca) {
+        callback("Interface is not logged in???", { success: false });
+        return;
+    }
+
+    let userID = data.userID.split("@")[0];
+
+    if (localNameCache[userID]) {
+        callback(null, {
+            success: true,
+            userInfo: localNameCache[userID]
+        });
+        return;
+    } else {
+        try {
+            let userInfo = await fca.getUserInfo(userID);
+
+            callback(null, {
+                success: true,
+                name: userInfo[userID].name
+            });
+        } catch {
+            callback(null, {
+                success: false,
+                name: `Unknown user ${userID}`
+            });
+        }
+    }
 });
 
 cmc.on("api:get_channelinfo", async (call_from: string, data: {
     interfaceID: number,
     channelID: string
 }, callback: (error?: any, data?: any) => void) => {
+    if (!clients[data.interfaceID]) {
+        callback("Interface ID does not exist", { success: false });
+        return;
+    }
 
+    let client = clients[data.interfaceID].instance;
+    let fca = client.fca;
+
+    if (!fca) {
+        callback("Interface is not logged in???", { success: false });
+        return;
+    }
+
+    let channelID = data.channelID.split("@")[0];
+
+    if (localNameCache[channelID]) {
+        callback(null, {
+            success: true,
+            channelInfo: localNameCache[channelID]
+        });
+        return;
+    } else {
+        try {
+            let channelInfo = await fca.getThreadInfo(channelID);
+
+            callback(null, {
+                success: true,
+                name: channelInfo.threadName
+            });
+        } catch {
+            callback(null, {
+                success: false,
+                name: `Unknown thread ${channelID}`
+            });
+        }
+    }
 });
