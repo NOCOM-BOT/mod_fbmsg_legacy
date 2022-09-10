@@ -38,7 +38,7 @@ declare module 'fca-unofficial' {
         },
         handleMessageRequest(threadOrThreads: string | string[], accept: boolean, callback: (err?: Error) => void): Promise<void>;
         listen(callback?: (err?: Error, message: IFCAU_ListenMessage) => void): EventEmitter;
-        listenMqtt(callback?: (err?: Error, message: IFCAU_ListenMessage) => void): EventEmitter;
+        listenMqtt(callback?: (err?: Error, message: IFCAU_ListenMessage) => void): EventEmitter & { stopListening: (callback?: () => void) => void };
         logout: (callback?: (err?: Error) => void) => Promise<void>,
         markAsDelivered(threadID: string, messageID: string, callback?: (err?: Error) => void): Promise<void>,
         markAsRead(threadID: string, read?: boolean, callback?: (err?: Error) => void): Promise<void>,

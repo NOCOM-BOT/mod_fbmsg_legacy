@@ -2,10 +2,16 @@ import CMComm from "./CMC.js";
 import Logger from "./Logger.js";
 import FCAInstance from "./Facebook";
 import type { IFCAU_ListenMessage } from "fca-unofficial";
+import streamBuffers from "stream-buffers";
 
+import fsSync from "node:fs";
 import fs from "node:fs/promises";
 import path from "node:path";
 import type EventEmitter from "node:events";
+import http from "node:http";
+import https from "node:https";
+import { fileURLToPath } from "node:url";
+import type { Readable } from "node:stream";
 
 let cmc = new CMComm();
 let logger = new Logger(cmc);
@@ -25,7 +31,7 @@ interface IMessageData {
 let clients: {
     [id: string]: {
         instance: FCAInstance,
-        listenEvent: EventEmitter,
+        listenEvent: EventEmitter & { stopListening: (callback?: () => void) => void },
         appstateLocation?: string
     }
 } = {};
@@ -189,11 +195,86 @@ cmc.on("api:login", async (call_from: string, data: {
 cmc.on("api:logout", async (call_from: string, data: {
     interfaceID: number
 }, callback: (error?: any, data?: any) => void) => {
-    
+    if (clients[data.interfaceID]) {
+        clients[data.interfaceID].listenEvent.stopListening();
+        clients[data.interfaceID].listenEvent.removeAllListeners();
+        delete clients[data.interfaceID];
+    }
+
+    callback(null, { success: true });
 });
 
 cmc.on("api:send_message", async (call_from: string, data: IMessageData, callback: (error?: any, data?: any) => void) => {
+    if (!clients[data.interfaceID]) {
+        callback("Interface ID does not exist", { success: false });
+        return;
+    }
 
+    let client = clients[data.interfaceID].instance;
+    let fca = client.fca;
+
+    if (!fca) {
+        callback("Interface is not logged in???", { success: false });
+        return;
+    }
+
+    let { messageID } = await fca.sendMessage({
+        body: data.content,
+        attachment: (data.attachments.map((attachment) => {
+            if (attachment.url.startsWith("data:")) {
+                // Check if it's base64-encoded or URL-encoded by checking if 
+                // it has ";base64" in "data:<mime>;base64,<data>"
+                if (attachment.url.split(";")[1].startsWith("base64")) {
+                    // Base64
+                    let buf = Buffer.from(attachment.url.split(",")[1], "base64");
+                    let stream = new streamBuffers.ReadableStreamBuffer({
+                        initialSize: buf.length
+                    });
+                    //@ts-ignore
+                    stream.path = attachment.filename;
+                    stream.put(buf);
+                    stream.stop();
+
+                    return stream;
+                } else {
+                    // URL-encoded (percent-encoded)
+                    let buf = Buffer.from(decodeURIComponent(attachment.url.split(",")[1]));
+                    let stream = new streamBuffers.ReadableStreamBuffer({
+                        initialSize: buf.length
+                    });
+                    //@ts-ignore
+                    stream.path = attachment.filename;
+                    stream.put(buf);
+                    stream.stop();
+
+                    return stream;
+                }
+            } else {
+                // Parse URL with protocol
+                let parsedURL = new URL(attachment.url);
+                switch (parsedURL.protocol) {
+                    case "http:":
+                        let httpReq = http.get(parsedURL.toString());
+                        httpReq.path = attachment.filename;
+                        return httpReq;
+                    case "https:":
+                        let httpsReq = https.get(parsedURL.toString());
+                        httpsReq.path = attachment.filename;
+                        return httpsReq;
+                    case "file:":
+                        let stream = fsSync.createReadStream(fileURLToPath(parsedURL.toString()));
+                        return stream;
+                    default:
+                        return null;
+                }
+            }
+        })).filter(x => x) as Readable[]
+    }, data.channelID);
+
+    callback(null, {
+        success: true,
+        messageID
+    });
 });
 
 cmc.on("api:get_userinfo", async (call_from: string, data: {
