@@ -203,6 +203,7 @@ cmc.on("api:logout", async (call_from: string, data: {
         clients[data.interfaceID].listenEvent.stopListening();
         clients[data.interfaceID].listenEvent.removeAllListeners();
         delete clients[data.interfaceID];
+        logger.info("facebook_legacy", `Disconnected interface ${data.interfaceID}.`);
     }
 
     callback(null, { success: true });
