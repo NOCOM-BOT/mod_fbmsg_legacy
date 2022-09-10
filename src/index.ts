@@ -189,7 +189,9 @@ cmc.on("api:login", async (call_from: string, data: {
         }
 
         logger.info("facebook_legacy", `Started listening for message on interface ${data.interfaceID}.`);
-        callback(null, { success: true });
+        callback(null, {
+            success: true,
+        });
     } catch (error) {
         logger.error("facebook_legacy", `Interface ${data.interfaceID} login failed.`, String(error));
         callback(String(error), { success: false });
@@ -206,7 +208,7 @@ cmc.on("api:logout", async (call_from: string, data: {
         logger.info("facebook_legacy", `Disconnected interface ${data.interfaceID}.`);
     }
 
-    callback(null, { success: true });
+    callback(null, null);
 });
 
 cmc.on("api:send_message", async (call_from: string, data: IMessageData, callback: (error?: any, data?: any) => void) => {
@@ -225,69 +227,76 @@ cmc.on("api:send_message", async (call_from: string, data: IMessageData, callbac
 
     let threadID = data.channelID.split("@")[0];
 
-    let { messageID } = await fca.sendMessage(
-        {
-            body: data.content,
-            attachment: (data.attachments.map((attachment) => {
-                if (attachment.url.startsWith("data:")) {
-                    // Check if it's base64-encoded or URL-encoded by checking if 
-                    // it has ";base64" in "data:<mime>;base64,<data>"
-                    if (attachment.url.split(";")[1].startsWith("base64")) {
-                        // Base64
-                        let buf = Buffer.from(attachment.url.split(",")[1], "base64");
-                        let stream = new streamBuffers.ReadableStreamBuffer({
-                            initialSize: buf.length
-                        });
-                        //@ts-ignore
-                        stream.path = attachment.filename;
-                        stream.put(buf);
-                        stream.stop();
+    try {
+        let { messageID } = await fca.sendMessage(
+            {
+                body: data.content,
+                attachment: (data.attachments.map((attachment) => {
+                    if (attachment.url.startsWith("data:")) {
+                        // Check if it's base64-encoded or URL-encoded by checking if 
+                        // it has ";base64" in "data:<mime>;base64,<data>"
+                        if (attachment.url.split(";")[1].startsWith("base64")) {
+                            // Base64
+                            let buf = Buffer.from(attachment.url.split(",")[1], "base64");
+                            let stream = new streamBuffers.ReadableStreamBuffer({
+                                initialSize: buf.length
+                            });
+                            //@ts-ignore
+                            stream.path = attachment.filename;
+                            stream.put(buf);
+                            stream.stop();
 
-                        return stream;
-                    } else {
-                        // URL-encoded (percent-encoded)
-                        let buf = Buffer.from(decodeURIComponent(attachment.url.split(",")[1]));
-                        let stream = new streamBuffers.ReadableStreamBuffer({
-                            initialSize: buf.length
-                        });
-                        //@ts-ignore
-                        stream.path = attachment.filename;
-                        stream.put(buf);
-                        stream.stop();
-
-                        return stream;
-                    }
-                } else {
-                    // Parse URL with protocol
-                    let parsedURL = new URL(attachment.url);
-                    switch (parsedURL.protocol) {
-                        case "http:":
-                            let httpReq = http.get(parsedURL.toString());
-                            httpReq.path = attachment.filename;
-                            return httpReq;
-                        case "https:":
-                            let httpsReq = https.get(parsedURL.toString());
-                            httpsReq.path = attachment.filename;
-                            return httpsReq;
-                        case "file:":
-                            let stream = fsSync.createReadStream(fileURLToPath(parsedURL.toString()));
                             return stream;
-                        default:
-                            return null;
-                    }
-                }
-            })).filter(x => x) as Readable[]
-        },
-        threadID,
-        void 0,
-        data.replyMessageID?.split?.("@")?.[0],
-        threadID.length >= 16
-    );
+                        } else {
+                            // URL-encoded (percent-encoded)
+                            let buf = Buffer.from(decodeURIComponent(attachment.url.split(",")[1]));
+                            let stream = new streamBuffers.ReadableStreamBuffer({
+                                initialSize: buf.length
+                            });
+                            //@ts-ignore
+                            stream.path = attachment.filename;
+                            stream.put(buf);
+                            stream.stop();
 
-    callback(null, {
-        success: true,
-        messageID
-    });
+                            return stream;
+                        }
+                    } else {
+                        // Parse URL with protocol
+                        let parsedURL = new URL(attachment.url);
+                        switch (parsedURL.protocol) {
+                            case "http:":
+                                let httpReq = http.get(parsedURL.toString());
+                                httpReq.path = attachment.filename;
+                                return httpReq;
+                            case "https:":
+                                let httpsReq = https.get(parsedURL.toString());
+                                httpsReq.path = attachment.filename;
+                                return httpsReq;
+                            case "file:":
+                                let stream = fsSync.createReadStream(fileURLToPath(parsedURL.toString()));
+                                return stream;
+                            default:
+                                return null;
+                        }
+                    }
+                })).filter(x => x) as Readable[]
+            },
+            threadID,
+            void 0,
+            data.replyMessageID?.split?.("@")?.[0],
+            threadID.length >= 16
+        );
+
+        callback(null, {
+            success: true,
+            messageID,
+            additionalInterfaceData: null
+        });
+    } catch {
+        callback(null, {
+            success: false
+        });
+    }
 });
 
 cmc.on("api:get_userinfo", async (call_from: string, data: {

@@ -14,8 +14,7 @@
     "nocom",
     "bot",
     "chat",
-    "json",
-    "database"
+    "facebook"
   ],
   "author": "BadAimWeeb",
   "license": "MIT",
