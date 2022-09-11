@@ -4,7 +4,9 @@
   "description": "[WIP] v1 Spec-compliant Facebook Messenger (legacy protocol) interface module for NOCOM_BOT",
   "main": "dist/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
   },
   "repository": {
     "type": "git",
