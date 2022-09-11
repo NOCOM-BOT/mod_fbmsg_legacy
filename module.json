@@ -1,6 +1,6 @@
 {
     "type": "package",
-    "namespace": "interface_fbmsg_legacy",
-    "communicationProtocol": "node_worker",
+    "namespace": "int_fbmsg_legacy",
+    "communicationProtocol": "node_ipc",
     "autoRestart": true
 }
