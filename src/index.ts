@@ -1,6 +1,6 @@
 import CMComm from "./CMC.js";
 import Logger from "./Logger.js";
-import FCAInstance from "./Facebook";
+import FCAInstance from "./Facebook.js";
 import type { IFCAU_ListenMessage } from "fca-unofficial";
 import streamBuffers from "stream-buffers";
 
