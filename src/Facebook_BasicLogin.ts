@@ -10,8 +10,8 @@
 import { load } from "cheerio";
 import qs from "querystring";
 import { URL } from "url";
-import generate_2fa from "./2FAGenerator";
-import type HTTPContext from "./HTTPContext";
+import generate_2fa from "./2FAGenerator.js";
+import type HTTPContext from "./HTTPContext.js";
 
 export default class FacebookBasicLoginHandler {
     async login(ctx: HTTPContext, email: string, password: string, twoFactorSecret?: string): Promise<string> {

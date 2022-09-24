@@ -7,7 +7,7 @@ declare module 'fca-unofficial' {
         email: string,
         password: string,
         appstate: any
-    }>, options?: Partial<IFCAU_Options>, callback?: (err?: Error, api: IFCAU_API) => void): Promise<IFCAU_API>;
+    }>, options?: Partial<IFCAU_Options>, callback?: (err: Error | null, api: IFCAU_API) => void): Promise<IFCAU_API>;
 
     export type IFCAU_API = {
         addUserToGroup: (userID: string, threadID: string, callback?: (err?: Error) => void) => Promise<void>,
@@ -26,19 +26,19 @@ declare module 'fca-unofficial' {
         getAppState: () => any,
         getCurrentUserID: () => string,
         getEmojiUrl: (c: string, size: number, pixelRatio: number) => string,
-        getFriendsList: (callback?: (err?: Error, friends: IFCAU_Friend[]) => void) => Promise<IFCAU_Friend[]>,
-        getThreadHistory: (threadID: string, amount: number, time?: number, callback?: (err?: Error, messages: IFCAU_Message[]) => void) => Promise<IFCAU_Message[]>,
-        getThreadInfo: (threadID: string, callback?: (err?: Error, thread: IFCAU_Thread) => void) => Promise<IFCAU_Thread>,
-        getThreadList: (limit: number, timestamp: number | null, tags: string[], callback?: (err?: Error, threads: IFCAU_ThreadList) => void) => Promise<IFCAU_ThreadList>,
-        getThreadPictures: (threadID: string, offset: number, limit: number, callback?: (err?: Error, pictures: string[]) => void) => Promise<string[]>,
-        getUserID: (name: string, callback?: (err?: Error, obj: IFCAU_UserIDResponse) => void) => Promise<IFCAU_UserIDResponse>,
-        getUserInfo: (userOrUsers: string | string[], callback?: (err?: Error, users: { [id: string]: IFCAU_User }) => void) => Promise<{ [id: string]: IFCAU_User }>,
+        getFriendsList: (callback?: (err: Error | null, friends: IFCAU_Friend[]) => void) => Promise<IFCAU_Friend[]>,
+        getThreadHistory: (threadID: string, amount: number, time?: number, callback?: (err: Error | null, messages: any[]) => void) => Promise<any[]>,
+        getThreadInfo: (threadID: string, callback?: (err: Error | null, thread: IFCAU_Thread) => void) => Promise<IFCAU_Thread>,
+        getThreadList: (limit: number, timestamp: number | null, tags: string[], callback?: (err: Error | null, threads: IFCAU_ThreadList) => void) => Promise<IFCAU_ThreadList>,
+        getThreadPictures: (threadID: string, offset: number, limit: number, callback?: (err: Error | null, pictures: string[]) => void) => Promise<string[]>,
+        getUserID: (name: string, callback?: (err: Error | null, obj: IFCAU_UserIDResponse) => void) => Promise<IFCAU_UserIDResponse>,
+        getUserInfo: (userOrUsers: string | string[], callback?: (err: Error | null, users: { [id: string]: IFCAU_User }) => void) => Promise<{ [id: string]: IFCAU_User }>,
         threadColors: {
             [color: string]: string
         },
         handleMessageRequest(threadOrThreads: string | string[], accept: boolean, callback: (err?: Error) => void): Promise<void>;
-        listen(callback?: (err?: Error, message: IFCAU_ListenMessage) => void): EventEmitter;
-        listenMqtt(callback?: (err?: Error, message: IFCAU_ListenMessage) => void): EventEmitter & { stopListening: (callback?: () => void) => void };
+        listen(callback?: (err: Error | null, message: IFCAU_ListenMessage) => void): EventEmitter;
+        listenMqtt(callback?: (err: Error | null, message: IFCAU_ListenMessage) => void): EventEmitter & { stopListening: (callback?: () => void) => void };
         logout: (callback?: (err?: Error) => void) => Promise<void>,
         markAsDelivered(threadID: string, messageID: string, callback?: (err?: Error) => void): Promise<void>,
         markAsRead(threadID: string, read?: boolean, callback?: (err?: Error) => void): Promise<void>,
@@ -46,7 +46,7 @@ declare module 'fca-unofficial' {
         markAsSeen(seenTimestamp?: number, callback?: (err?: Error) => void): Promise<void>,
         muteThread: (threadID: string, muteSeconds: number, callback?: (err?: Error) => void) => Promise<void>,
         removeUserFromGroup: (userID: string, threadID: string, callback?: (err?: Error) => void) => Promise<void>,
-        resolvePhotoUrl: (photoID: string, callback?: (err?: Error, url: string) => void) => Promise<string>,
+        resolvePhotoUrl: (photoID: string, callback?: (err: Error | null, url: string) => void) => Promise<string>,
         sendMessage: (
             message: string | {
                 body: string,

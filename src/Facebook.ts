@@ -1,7 +1,7 @@
-import "./FCATypes";
+import "./FCATypes.js";
 import fcaLogin from "fca-unofficial";
-import FacebookBasicLoginHandler from "./Facebook_BasicLogin";
-import HTTPContext from "./HTTPContext";
+import FacebookBasicLoginHandler from "./Facebook_BasicLogin.js";
+import HTTPContext from "./HTTPContext.js";
 
 type FCA_AppState = {
     key: string,
